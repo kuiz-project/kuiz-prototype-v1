@@ -1,13 +1,41 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[3]:
+# In[7]:
 
 
-import fitz 
+get_ipython().system('pip install openai')
+import fitz
 import re
 from collections import Counter
 from sklearn.feature_extraction.text import TfidfVectorizer
+import openai
+
+openai.api_key = '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'
+
+Lecture = input("강의명을 입력하세요: ")
+Keyword = input("키워드: ")
+
+prompt_text = "{}와 관련된 {}문제를 객관식으로 사용자가 선택할 수 있게 문제를 4지선다로 만들어주고 답도 알려줘.".format(Lecture, Keyword)
+
+max_tokens = 3000
+
+response = openai.Completion.create(
+  engine="text-davinci-003",
+  prompt=prompt_text,
+  max_tokens=max_tokens,
+)
+
+generated_text = response.choices[0].text.strip()
+
+if len(generated_text) < max_tokens:
+    print(generated_text)
+else:
+    print(generated_text[:max_tokens])
+
+
+# In[8]:
+
 
 def extract_text_from_pdf(file_path):
     """
