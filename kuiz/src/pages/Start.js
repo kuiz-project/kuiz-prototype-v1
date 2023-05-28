@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Logo, StartButton, Title, Wrapper } from "./StartStyledComponents";
+import { useNavigate } from "react-router-dom";
 
-function Home() {
+function Start() {
+  const navigate = useNavigate();
   const [titlecount, setTitlecount] = useState(0);
   const [isfading, setIsFading] = useState(false);
   const point = ["연습문제", "해설", "퀴즈", "", "KUIZ"];
@@ -27,11 +29,15 @@ function Home() {
       <Title titlecount={titlecount} isfading={isfading}>
         당신이 원하는 <span>{point[titlecount]}</span>
       </Title>
-      <StartButton>
+      <StartButton
+        onClick={() => {
+          navigate("/home");
+        }}
+      >
         <span>시작하기</span>
       </StartButton>
     </Wrapper>
   );
 }
 
-export default Home;
+export default Start;
