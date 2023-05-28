@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Logo, StartButton, Title, Wrapper } from "./HomeStyledComponents";
+import { Logo, StartButton, Title, Wrapper } from "./StartStyledComponents";
 
 function Home() {
   const [titlecount, setTitlecount] = useState(0);
@@ -7,11 +7,16 @@ function Home() {
   const point = ["연습문제", "해설", "퀴즈", "", "KUIZ"];
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsFading(true);
-      setTimeout(() => {
-        setTitlecount((prev) => (prev + 1) % point.length);
-        setIsFading(false);
-      }, 1000);
+      if (titlecount >= 4) {
+        clearTimeout(timer); // KUIZ일때 타이머 멈추기
+      } else {
+        setIsFading(true); // 숨기기
+        setTimeout(() => {
+          // 1초 뒤
+          setTitlecount((prev) => prev + 1); // 다음 문구 설정
+          setIsFading(false); // 보이기(동시에 일어남)
+        }, 1000);
+      }
     }, 2000);
     return () => clearTimeout(timer);
   }, [titlecount]);

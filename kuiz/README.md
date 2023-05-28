@@ -1,70 +1,86 @@
-# Getting Started with Create React App
+# 문제해결
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 문구가 변할때마다 애니메이션 주기
 
-## Available Scripts
+목표는 다음과 같다.
+<img src="https://im.ezgif.com/tmp/ezgif-1-dfba0421ae.gif">
 
-In the project directory, you can run:
+문구는 연습문제 => 해설 => 퀴즈 => "" => KUIZ순서대로 변하며 나타나고 사라질때 부드러운 애니메이션을 사용하는 것이다.
 
-### `npm start`
+```js
+function Home() {
+  const [titlecount, setTitlecount] = useState(0);
+  const [isfading, setIsFading] = useState(false);
+  const point = ["연습문제", "해설", "퀴즈", "", "KUIZ"];
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (titlecount >= 4) {
+        clearTimeout(timer); // KUIZ일때 타이머 멈추기
+      } else {
+        setIsFading(true); // 숨기기
+        setTimeout(() => {
+          // 1초 뒤
+          setTitlecount((prev) => prev + 1); // 다음 문구 설정
+          setIsFading(false); // 보이기(동시에 일어남)
+        }, 1000);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [titlecount]);
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+  return (
+    <Wrapper>
+      <Logo></Logo>
+      <Title titlecount={titlecount} isfading={isfading}>
+        당신이 원하는 <span>{point[titlecount]}</span>
+      </Title>
+      <StartButton>
+        <span>시작하기</span>
+      </StartButton>
+    </Wrapper>
+  );
+}
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```js
+export const Title = styled.div`
+  margin: 264px 605px 431px 80px;
+  font-weight: 400;
+  font-size: 128px;
+  line-height: 185px;
+  color: #515151d6;
+  span {
+    transition: opacity 1s ease-in-out;
+    opacity: ${(props) => (props.isfading ? "0" : "1")};
+    color: ${(props) => (props.titlecount >= 4 ? "#28527A" : "#515151d6")};
+  }
+`;
+```
 
-### `npm test`
+먼저, 이 `useEffect` 훅은 `titlecount`의 상태가 변경될 때마다 실행된다.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+`useEffect` 내부에서 `setTimeout` 함수가 두 번 사용되고 있다.
 
-### `npm run build`
+첫 번째 `setTimeout`은 2초 후에 실행되며, 이 때 `setIsFading(true);`가 호출되어 `isFading` 상태를 `true로` 변경합니다. 이는 화면에 표시되는 텍스트가 사라지는 것을 의미한다. 이 `setIsFading(true)`;가 호출되면, `Title` 컴포넌트의 `isFading` 속성이 `true`로 변경되어 `opacity`가 0이 되고, 텍스트는 부드럽게 사라진다.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+그 다음으로, 첫 번째 `setTimeout` 내부에서 또 다른 `setTimeout` 함수가 있는데 이 함수는 첫 번째 `setTimeout` 함수가 호출된 후 1초후에 실행된다.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+여기서는 다음문구로 전환, 문구를 보이게 하는 함수를 실행한다.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+따라서, 다음 문구는 부드럽게 나타난다.
 
-### `npm run eject`
+여기서 주의 할 점은 setTimeout안의 두 호출 사이에 렌더링이 일어나지 않는다.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+리액트는 내부적으로 성능최적화를 위해 업데이트를 한 번에 처리하여 한 번만 렌더링이 발생시킨다.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+마지막으로, `clearTimeout`를 사용하고 있다. 이는 컴포넌트가 언마운트되거나 `titlecount` 상태가 변경되기 전에 현재 실행되고 있는 `setTimeout` 함수를 취소하는 역할을 한다. 이렇게 하지 않으면, 컴포넌트가 언마운트된 후에도 setTimeout 함수가 실행되는 문제를 방지할 수 있다.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+**순서 정리**
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+최초 문구 보이기 => 2초뒤 가리기 => 1초뒤 문구 업데이트 + 보이기 => 1초 뒤에 다시 가리기 => ... `titlecount`가 4가될때 까지 반복 후
 
-## Learn More
+결국 2초동안 1초는 함수를 실행하는 시간 + 1초는 애니메이션 시간으로 인해 끊기지 않고 문구가 사라졌다 보였다 반복한다.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+매우 자주 쓰이는 애니메이션인데도 라이브러리 없이 구현하는것이 마냥 쉽지만은 않다..
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+타이머안에 타이머를 넣는 것도 앞으로 고려해보자.
